@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Transfer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow-md">
+        <h2 class="text-xl font-bold mb-4">Upload File</h2>
+        <input type="file" id="fileInput" class="block w-full mb-2 border p-2">
+        <button onclick="uploadFile()" class="bg-blue-500 text-white px-4 py-2 rounded">Upload</button>
+        <p id="message" class="text-green-600 mt-2 hidden"></p>
+    </div>
+
+    <div class="max-w-xl mx-auto bg-white p-6 mt-4 rounded-xl shadow-md">
+        <h2 class="text-xl font-bold mb-4">Uploaded Files</h2>
+        <ul id="fileList" class="list-disc pl-5"></ul>
+    </div>
+
+    <script>
+        async function uploadFile() {
+            let fileInput = document.getElementById("fileInput");
+            if (!fileInput.files.length) return alert("Please select a file");
+            let formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+            
+            let response = await fetch("/upload", { method: "POST", body: formData });
+            let result = await response.json();
+            document.getElementById("message").innerText = result.message;
+            document.getElementById("message").classList.remove("hidden");
+            loadFiles();
+        }
+
+        async function loadFiles() {
+            let response = await fetch("/files");
+            let data = await response.json();
+            let fileList = document.getElementById("fileList");
+            fileList.innerHTML = "";
+            data.files.forEach(file => {
+                fileList.innerHTML += `<li>
+                    ${file} 
+                    <a href="/download/${file}" class="text-blue-600">Download</a>
+                    <button onclick="deleteFile('${file}')" class="text-red-600 ml-2">Delete</button>
+                </li>`;
+            });
+        }
+
+        async function deleteFile(filename) {
+            await fetch(`/delete/${filename}`, { method: "DELETE" });
+            loadFiles();
+        }
+
+        loadFiles();
+    </script>
+</body>
+</html>
